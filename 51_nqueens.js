@@ -1,20 +1,18 @@
 //leetcode problem #51. N-Queens
 //JavaScript implementation of the general backtracking algorithm found in Steven Skiena's 'The Algorithm Design Manual 2nd Edition'
 //The book: https://www.amazon.com/Algorithm-Design-Manual-Steven-Skiena/dp/1849967202
-
-let solutionCount = 0;
-let solutions = [];
+//9/9 test cases, 76ms runtime
 
 //backtrack algorithm. generic across various problems, most of the work here happens in constructCandidates and and processSolution
 //@param a: solution vector
 //@param k: kth potential solution of solution vector a
 //@param n: dimension of the board
-let backtrack = function(a, k, n) {
+let backtrack = function(a, k, n, solutions) {
     let candidates = [];                        //candidates for next position
     let ncandidates = 0;                        //next position candidate count
 
     if(isSolution(a, k, n)) {
-        processSolution(a, k, n);
+        processSolution(a, k, n, solutions);
     }
     else {
         //extend our partial solution by trying the (k + 1)th candidate
@@ -26,26 +24,26 @@ let backtrack = function(a, k, n) {
         for(let i = 0; i < ncandidates; i++) {
             //appending to the end of current solution vector
             a[k] = candidates[i];
-            backtrack(a, k, n);
+            backtrack(a, k, n, solutions);
         }
     }
 };
 
-let processSolution = function(a, k, n) {
-    console.log("\nsolution: " + (solutionCount + 1));
-    let board = "";
+let processSolution = function(a, k, n, solutions) {
+    let solution = [];
     for(let i = 1; i <= n; i++) {
+        let row = "";
         for(let j = 1; j <= n; j++) {
             if(a[i] === j) {
-                process.stdout.write(" 1 ");
+                row += 'Q';
             }
             else {
-                process.stdout.write(" 0 ");
+                row += '.';
             }
         }
-        console.log("");
+        solution.push(row);
     }
-    solutionCount++;
+    solutions.push(solution);
 }
 
 //tests whether the first k inputs of the solution vector a is a complete solution for the problem
@@ -85,8 +83,9 @@ let constructCandidates = function(a, k, n, candidates) {
 //@param n: dimension of the chessboard
 //@return: 2-d array of strings representing the board state and queen positions
 let solveNQueens = function(n) {
-    backtrack([], 0, n);
+    let solutions = [];
+    backtrack([], 0, n, solutions);
+    return solutions;
 };
 
-//n-queens on an 8x8 grid
-solveNQueens(5);
+let q4 = solveNQueens(4);
