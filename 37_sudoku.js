@@ -2,8 +2,6 @@ const DIMENSION = 9;
 const NCELLS = DIMENSION * DIMENSION;
 const FREE = ".";
 
-let finished = false;
-
 class Square {
     constructor() {
         this.row = null;
@@ -16,6 +14,7 @@ class Board {
         this.m = board;
         this.freeCount = NCELLS;
         this.move = [];
+        this.finished = false;
         for(let i = 0; i < this.m.length; i++) {
             for(let j = 0; j < this.m[i].length; j++) {
                 if(this.m[i][j] !== FREE) {
@@ -26,10 +25,51 @@ class Board {
     }
     fillSquare(row, col, val) {
         this.m[row][col] = val;
-        this.freeCount++;
+        this.freeCount--;
     }
     freeSquare(row, col) {
         this.m[row][col] = FREE;
+        this.freeCount++;
+    }
+    getNextSquare() {
+        for(let i = 0; i < this.m.length; i++) {
+            for(let j = 0; j < this.m[i].length; j++) {
+                if(this.m[i][j] === FREE) {
+                    return { row: i, col: j };
+                }
+            }
+        }
+        return null;
+    }
+    getPossibleValues(row, col) {
+        let possible = [false, true, true, true, true, true, true, true, true, true];
+        let currentRow = this.m[row];
+        let currentCol = [];
+        let currentSector = [];
+        for(let i = 0; i < this.m.length; i++) {
+            currentCol.push(this.m[i][row])
+        }
+        let sectorStart = { row: Math.floor(row / 3) * 3, col: Math.floor(col / 3) * 3 };
+        for(let i = 0; i < 3; i++) {
+            for(let j = 0; j < 3; j++) {
+                currentSector.push(this.m[sectorStart.row + i][sectorStart.col + j]);
+            }
+        }
+        console.log("possible values for location: ", row, col);
+        console.log("current row: ", currentRow);
+        console.log("current col: ", currentCol);
+        console.log("current sector: ", currentSector);
+
+        for(let i = 1; i <= DIMENSION; i++) {
+            if(currentRow[i] !== FREE) {
+            }
+            if(currentCol[i] !== FREE) {
+            }
+            if(currentSector[i] !== FREE) {
+            }
+        }
+
+        return possible;
     }
     print() {
         for(let i = 0; i < this.m.length; i++) {
@@ -61,19 +101,23 @@ let backtrack = function(board, k) {
         //extend our partial solution by trying the (k + 1)th candidate
         k += 1;
 
-        //construct a set of all possible candidates for the (k + 1)th position. we'll iterate through all possible candidates, and then recursively call
-        //backtrack with them
-        ncandidates = constructCandidates(a, k, n, candidates);
+        ncandidates = constructCandidates(board, k, candidates);
         for(let i = 0; i < ncandidates; i++) {
-            //appending to the end of current solution vector
-            a[k] = candidates[i];
+            //board.m[k] = candidates[i];
+            //a[k] = candidates[i];
+            let row = board.move[k].row;
+            let col = board.move[k].col;
+            board.m[row][col] = candidates[i];
+            board.fillSquare(row, col, candidates[i]);
             backtrack(board, k);
+            board.freeSquare(row, col);
+            if(board.finished) return;
         }
     }
 };
 
 let processSolution = function(board) {
-    finished = true;
+    board.finished = true;
     board.print();
 };
 
@@ -83,9 +127,28 @@ let isSolution = function(board) {
 };
 
 //n queens seems a lot like sudoku
-let constructCandidates = function(a, k, n, candidates) {
+let constructCandidates = function(board, k, candidates) {
     let ncandidates = 0;
-    let legalMove = false;
+
+    let nextSquare = board.getNextSquare();
+   
+    if(nextSquare === null) {
+        console.log("Error condition");
+        return;
+    }
+
+    board.move[k] = {
+        row: nextSquare.row,
+        col: nextSquare.col
+    };
+    
+    let possible = board.getPossibleValues(nextSquare.row, nextSquare.col, []);
+    for(let i = 0; i <= DIMENSION; i++) {
+        if(possible[i] === true) {
+            candidates.push(i);
+            ncandidates++;
+        }
+    }
 
     return ncandidates;
 };
@@ -93,9 +156,9 @@ let constructCandidates = function(a, k, n, candidates) {
 let solveSudoku = function(board) {
     let b = new Board(board);
     b.print();
-    //let solutions = [];
-    backtrack(board, NCELLS - b.freeCount);
-    //return solutions;
+    b.getPossibleValues(8, 8);
+    //backtrack(b, NCELLS - b.freeCount);
+    //console.log(b.getNextSquare());
 };
 
 let board = [
