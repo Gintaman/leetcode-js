@@ -24,7 +24,7 @@ class Board {
         }
     }
     fillSquare(row, col, val) {
-        this.m[row][col] = val;
+        this.m[row][col] = String(val);
         this.freeCount--;
     }
     freeSquare(row, col) {
@@ -47,7 +47,7 @@ class Board {
         let currentCol = [];
         let currentSector = [];
         for(let i = 0; i < this.m.length; i++) {
-            currentCol.push(this.m[i][row])
+            currentCol.push(this.m[i][col])
         }
         let sectorStart = { row: Math.floor(row / 3) * 3, col: Math.floor(col / 3) * 3 };
         for(let i = 0; i < 3; i++) {
@@ -144,7 +144,7 @@ let constructCandidates = function(board, k, candidates) {
     };
     
     let possible = board.getPossibleValues(nextSquare.row, nextSquare.col, []);
-    for(let i = 0; i < possible.length; i++) {
+    for(let i = 1; i < possible.length; i++) {
         if(possible[i] === true) {
             candidates.push(i);
             ncandidates++;
@@ -161,7 +161,7 @@ let solveSudoku = function(board) {
     //console.log(b.getNextSquare());
 };
 
-let board = [
+/*let board = [
     [".",".","9","7","4","8",".",".","."],
     ["7",".",".",".",".",".",".",".","."],
     [".","2",".","1",".","9",".",".","."],
@@ -171,6 +171,18 @@ let board = [
     [".",".",".","8",".","3",".","2","."],
     [".",".",".",".",".",".",".",".","6"],
     [".",".",".","2","7","5","9",".","."]
-];
+];*/
 
-solveSudoku(board);
+/*board = [
+    ["5","3",".",".","7",".",".",".","."],
+    ["6",".",".","1","9","5",".",".","."],
+    [".","9","8",".",".",".",".","6","."],
+    ["8",".",".",".","6",".",".",".","3"],
+    ["4",".",".","8",".","3",".",".","1"],
+    ["7",".",".",".","2",".",".",".","6"],
+    [".","6",".",".",".",".","2","8","."],
+    [".",".",".","4","1","9",".",".","5"],
+    [".",".",".",".","8",".",".","7","9"]
+]*/
+
+solveSudoku([[".",".","9","7","4","8",".",".","."],["7",".",".",".",".",".",".",".","."],[".","2",".","1",".","9",".",".","."],[".",".","7",".",".",".","2","4","."],[".","6","4",".","1",".","5","9","."],[".","9","8",".",".",".","3",".","."],[".",".",".","8",".","3",".","2","."],[".",".",".",".",".",".",".",".","6"],[".",".",".","2","7","5","9",".","."]]);
