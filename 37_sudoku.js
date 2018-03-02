@@ -55,17 +55,16 @@ class Board {
                 currentSector.push(this.m[sectorStart.row + i][sectorStart.col + j]);
             }
         }
-        console.log("possible values for location: ", row, col);
-        console.log("current row: ", currentRow);
-        console.log("current col: ", currentCol);
-        console.log("current sector: ", currentSector);
 
-        for(let i = 1; i <= DIMENSION; i++) {
+        for(let i = 0; i < DIMENSION; i++) {
             if(currentRow[i] !== FREE) {
+                possible[Number(currentRow[i])] = false;
             }
             if(currentCol[i] !== FREE) {
+                possible[Number(currentCol[i])] = false;
             }
             if(currentSector[i] !== FREE) {
+                possible[Number(currentSector[i])] = false;
             }
         }
 
@@ -111,7 +110,9 @@ let backtrack = function(board, k) {
             board.fillSquare(row, col, candidates[i]);
             backtrack(board, k);
             board.freeSquare(row, col);
-            if(board.finished) return;
+            if(board.finished) {
+                return;
+            }
         }
     }
 };
@@ -143,7 +144,7 @@ let constructCandidates = function(board, k, candidates) {
     };
     
     let possible = board.getPossibleValues(nextSquare.row, nextSquare.col, []);
-    for(let i = 0; i <= DIMENSION; i++) {
+    for(let i = 0; i < possible.length; i++) {
         if(possible[i] === true) {
             candidates.push(i);
             ncandidates++;
@@ -156,8 +157,7 @@ let constructCandidates = function(board, k, candidates) {
 let solveSudoku = function(board) {
     let b = new Board(board);
     b.print();
-    b.getPossibleValues(8, 8);
-    //backtrack(b, NCELLS - b.freeCount);
+    backtrack(b, NCELLS - b.freeCount);
     //console.log(b.getNextSquare());
 };
 
