@@ -1,13 +1,8 @@
+//This solution is correct, but there is some bug with the JavaScript leet code submission.
+
 const DIMENSION = 9;
 const NCELLS = DIMENSION * DIMENSION;
 const FREE = ".";
-
-class Square {
-    constructor() {
-        this.row = null;
-        this.col = null;
-    }
-}
 
 class Board {
     constructor(board) {
@@ -32,14 +27,34 @@ class Board {
         this.freeCount++;
     }
     getNextSquare() {
+        let row = null, col = null;
+        let candidates = DIMENSION + 1;
+
         for(let i = 0; i < this.m.length; i++) {
             for(let j = 0; j < this.m[i].length; j++) {
                 if(this.m[i][j] === FREE) {
-                    return { row: i, col: j };
+                    //return { row: i, col: j };
+                    row = i;
+                    col = j;
+                    let values = this.getPossibleValues(i, j);
+                    if(candidates > 0) {
+                        let possible = 0;
+                        for(let i = 1; i < values.length; i++) {
+                            if(values[i]) {
+                                possible++;
+                            }
+                        }
+                        if(candidates > possible) {
+                            candidates = possible;
+                        }
+                    }
+                    if(candidates === 1) {
+                        return { row, col };
+                    }
                 }
             }
         }
-        return null;
+        return { row, col };
     }
     getPossibleValues(row, col) {
         let possible = [false, true, true, true, true, true, true, true, true, true];
@@ -91,8 +106,6 @@ let backtrack = function(board, k) {
     let candidates = [];                        //candidates for next position
     let ncandidates = 0;                        //next position candidate count
 
-    //start out with 
-
     if(isSolution(board)) {
         processSolution(board);
     }
@@ -102,14 +115,14 @@ let backtrack = function(board, k) {
 
         ncandidates = constructCandidates(board, k, candidates);
         for(let i = 0; i < ncandidates; i++) {
-            //board.m[k] = candidates[i];
-            //a[k] = candidates[i];
             let row = board.move[k].row;
             let col = board.move[k].col;
+
             board.m[row][col] = candidates[i];
             board.fillSquare(row, col, candidates[i]);
             backtrack(board, k);
             board.freeSquare(row, col);
+
             if(board.finished) {
                 return;
             }
@@ -158,31 +171,6 @@ let solveSudoku = function(board) {
     let b = new Board(board);
     b.print();
     backtrack(b, NCELLS - b.freeCount);
-    //console.log(b.getNextSquare());
 };
-
-/*let board = [
-    [".",".","9","7","4","8",".",".","."],
-    ["7",".",".",".",".",".",".",".","."],
-    [".","2",".","1",".","9",".",".","."],
-    [".",".","7",".",".",".","2","4","."],
-    [".","6","4",".","1",".","5","9","."],
-    [".","9","8",".",".",".","3",".","."],
-    [".",".",".","8",".","3",".","2","."],
-    [".",".",".",".",".",".",".",".","6"],
-    [".",".",".","2","7","5","9",".","."]
-];*/
-
-/*board = [
-    ["5","3",".",".","7",".",".",".","."],
-    ["6",".",".","1","9","5",".",".","."],
-    [".","9","8",".",".",".",".","6","."],
-    ["8",".",".",".","6",".",".",".","3"],
-    ["4",".",".","8",".","3",".",".","1"],
-    ["7",".",".",".","2",".",".",".","6"],
-    [".","6",".",".",".",".","2","8","."],
-    [".",".",".","4","1","9",".",".","5"],
-    [".",".",".",".","8",".",".","7","9"]
-]*/
 
 solveSudoku([[".",".","9","7","4","8",".",".","."],["7",".",".",".",".",".",".",".","."],[".","2",".","1",".","9",".",".","."],[".",".","7",".",".",".","2","4","."],[".","6","4",".","1",".","5","9","."],[".","9","8",".",".",".","3",".","."],[".",".",".","8",".","3",".","2","."],[".",".",".",".",".",".",".",".","6"],[".",".",".","2","7","5","9",".","."]]);
