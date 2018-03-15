@@ -66,22 +66,6 @@ a 1  2  2  2  3
  *  d|0 0 0 0 0      
  */
 
-//these are the comparisons we make for longestPalindrome("aaaaa")
-/*
-calling is palindrome on:  a (1, 1)
-calling is palindrome on:  aa (1, 2)
-calling is palindrome on:  aaa (1, 3)
-calling is palindrome on:  aaaa (1, 4)
-calling is palindrome on:  a (2, 2)
-calling is palindrome on:  aa (2, 3)
-calling is palindrome on:  aaa (2, 4)
-calling is palindrome on:  a (3, 3)
-calling is palindrome on:  aa (3, 4)
-calling is palindrome on:  a (4, 4)
-*/
-
-//notice that (2,3) is the same result as (1, 2). we are doing redundant work here.
-
 let isPalindrome = function(str) {
     let start = 0, end = str.length - 1;
     while(start < end) {
@@ -118,35 +102,8 @@ function lcs(x, y) {
     for(let i = 1; i <= m; i++) {
         for(let j = 1; j <= n; j++) {
             if(j >= i) {
-                //console.log("comparing: ", x.substring(i-1, j));
-                //console.log("is the element to the left a palindrome?", c[i][j-1] === 1);
-                //if(c[i][j-1])
-//these are the comparisons we make for longestPalindrome("aaaaa")
-/*
-calling is palindrome on:  a (1, 1)
-calling is palindrome on:  aa (1, 2)
-calling is palindrome on:  aaa (1, 3)
-calling is palindrome on:  aaaa (1, 4)
-calling is palindrome on:  a (2, 2)
-calling is palindrome on:  aa (2, 3)
-calling is palindrome on:  aaa (2, 4)
-calling is palindrome on:  a (3, 3)
-calling is palindrome on:  aa (3, 4)
-calling is palindrome on:  a (4, 4)
-
-this still follows the same pattern... each square 'depends' on the square to the top left
-
-  [1, 1, 1, 1, 1 ]  
-  [0, 1, 1, 1, 1 ]  
-  [0, 0, 1, 1, 1 ]  
-  [0, 0, 0, 1, 1 ]  
-  [0, 0, 0, 0, 1 ]  
-
-*/
-
-//notice that (2,3) is the same result as (1, 2). we are doing redundant work here.
+                console.log("comparing: ", x.substring(i-1, j));
                 if(isPalindrome(x.substring(i-1, j))) {
-                    //console.log("is the element to the left a palindrome? ", isPalindrome(x.substring(i-1,j-1)));
                     //console.log("Is a palindrome!: ", x.substring(i-1, j));
                     //console.log("is a palindrome: ", x.substring(i-1, j), " string indices from ", i-1, " to ", (j));
                     c[i][j] = 1;//c[i][j-1] + 1;
@@ -181,7 +138,7 @@ this still follows the same pattern... each square 'depends' on the square to th
             }*/
         }
     }
-    console.log(c);
+    //console.log(c);
     
     /*for(let i = 0; i <= m; i++) {
         for(let j = 0; j <= n; j++) {
@@ -281,9 +238,9 @@ let longestPalindrome = function(s) {
 
 //console.log(longestPalindrome("abccba"));
 
-console.log(longestPalindrome("aaaaa"));
+console.log(longestPalindrome("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"));
 
-//console.log(longestPalindrome("babad"));
+console.log(longestPalindrome("babad"));
 
 //console.log(longestPalindrome("cbbd"));
 
