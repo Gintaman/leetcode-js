@@ -56,3 +56,4 @@ console.log(lcs("zbcdf", "abcdaf"));
 console.log(lcs("aaaaa", "aaaaaa"));
 console.log(lcs("aaaaaa", "aaaaa"));
 console.log(lcs("aaaaaa", "aaaaaa"));
+console.log(lcs("zbc", "ab"));
