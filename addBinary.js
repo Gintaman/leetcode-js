@@ -1,23 +1,25 @@
 let first = "1111"; //4
 let second = "11";  //2
+//first = "0";
+//second = "0";
+first = "1010";
+second = "1011";
 
-//"1111" + "11" -> "10010"
-//
-//1 xor 1 -> 1
-//1 xor 0 -> 0
-//0 xor 1 -> 0
-//0 xor 0 -> 1
 let add = function(a, b) {
     let posA = a.length, posB = b.length;
-    let diff = posB - posA; //use diff as helper in indexing. have the while loop iterate over the longer string instead
+    let len = posA > posB ? posA : posB;
     let carry = 0;
-    while(posA --> 0 && posB --> 0) {
-        let bitA = a[posA] === "1" ? 1 : 0;
-        let bitB = b[posB] === "1" ? 1 : 0;
-        let sum = +!(bitA ^ bitB);
-        //1 + 1 = 0 
-        //let sum = !(bitA ^ bitB) ^ carry;
+    let res = "";
+    while(len --> 0) {
+        let bitA = 0, bitB = 0;
+        if(posA >= 0) bitA = a[--posA] === "1" ? 1 : 0;
+        if(posB >= 0) bitB = b[--posB] === "1" ? 1 : 0;
+        let bsum = bitA ^ bitB ^ carry;
+        carry = bitA + bitB + carry > 1 ? 1 : 0;
+        res = bsum === 1 ? "1" + res : "0" + res;
     }
+    if(carry) res = "1" + res;
+    return res;
 };
 
-add(first, second);
+console.log(add(first, second));
