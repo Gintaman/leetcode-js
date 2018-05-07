@@ -1,0 +1,2 @@
+-for problems involving anagrams, depending on the problem, check whether or not sorting first would help
+-for problems with matrices and 2d arrays, BE CAREFUL ABOUT ROWS AND COLUMNS. like holy shit, that simple setToZeroes problem SHOULD NOT have taken so long
