@@ -21,11 +21,18 @@ function isValid(addr) {
 
 function validateIpv4(addr) {
     addr = addr.split('');
-    backtrack([[], [], [], [], []], 0, addr);
+    backtrack(['', [], [], [], []], 0, addr);
 }
 
 function constructCandidates(a, k, addr) {
-    return [];
+    console.log(k);
+    let len = a[k].length;
+    let candidates = [];
+    for(let i = 0; i < 3 - len; i++) {
+        candidates.push(addr[i]);
+    }
+    //console.log(candidates)
+    return candidates;
 }
 
 let total = 0;
@@ -40,10 +47,25 @@ function backtrack(a, k, addr) {
     } 
     else {
         k += 1;
-        while(a[k].length < 3 && addr.length) {
+
+        /*for(let i = a[k].length; i < 3; i++) {
             a[k].push(addr.shift());
-            console.log(a, addr)
+            console.log(a, k);
             backtrack(a, k, addr);
+            addr.unshift(a[k].pop());
+        }*/
+
+        //TODO maybe we shouldn't be taking elements out of addr? or if we take something out of addr, we need to push it back in if we take back the move
+        let candidates = constructCandidates(a, k, addr);
+        for(let i = 0; i < candidates.length; i++) {
+            a[k].push(candidates[i]);
+            console.log(a, k);
+            backtrack(a, k, addr);
+            a[k].pop();
+            /*a[k].push(addr.shift());
+            //console.log(a, k);
+            backtrack(a, k, addr);
+            addr.unshift(a[k].pop());*/
         }
     }
 }
@@ -59,4 +81,5 @@ function backtrack(a, k, addr) {
 //12 7001
 //127 001
 
+//console.log(validateIpv4('1111'));
 console.log(validateIpv4('127001'));
