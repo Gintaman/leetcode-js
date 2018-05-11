@@ -1,37 +1,62 @@
-function validOctet(octect) {
-    if(octect.length < 0 || octect.length > 3) {
-        return false;
-    }
-    let numVal = Number(octect);
-    if(Number.isNaN(numVal) || numVal < 0 || numVal > 255) {
-        return false;
+//we'll keep an array of 4 octects, or 4 arrays of arrays
+//[
+//  ['1', '2', '7'],
+//  ['0'],
+//  ['0'],
+//  ['1']
+//]
+//we'll do a backtrack dfs through each configuration.
+//a solution is valid if its length is 4 (has 4 arrays as its elements, and each of its 4 arrays contain valid octects)
+
+//for now we'll just do an array of strings
+
+function isValid(addr) {
+    if(addr.length !== 4) return false;
+    for(let i = 0; i < addr.length; i++) {
+        let numVal = Number(addr[i]);
+        if(Number.isNaN(numVal) || numVal < 0 || numVal > 255) return false;
     }
     return true;
 }
 
-function validIpv4(num) {
-    if(!num || !num.length) return false;
-    if(num.length > 12) return false;
-    num = num.split('');
-
-    let octects = 4;
-    return canMakeOctect(num, octects);
+function validateIpv4(addr) {
+    addr = addr.split('');
+    backtrack([[], [], [], [], []], 0, addr);
 }
 
-function canMakeOctect(address, octects) {
-    console.log(address, octects);
-    if(octects > 0 && address.length === 0) return false;
-    if(octects === 0 && address.length > 1) return false;
-    if(octects === 0 && address.length === 0) return true;
+function constructCandidates(a, k, addr) {
+    return [];
+}
 
-    let currentOctect = [];
-    while(currentOctect.length < 3 && address.length) {
-        currentOctect.push(address.shift());
-        if(validOctet(currentOctect)) {
-            octects--;
-            return canMakeOctect(address, octects);
+let total = 0;
+function backtrack(a, k, addr) {
+    if(k === 4) {
+        if(addr.length === 0 && isValid(a)) {
+            console.log("valid ip");
+        }
+        else {
+            //console.log("not valid", a, addr);
+        }
+    } 
+    else {
+        k += 1;
+        while(a[k].length < 3 && addr.length) {
+            a[k].push(addr.shift());
+            console.log(a, addr)
+            backtrack(a, k, addr);
         }
     }
 }
 
-console.log(validIpv4("127001"));
+//1 2 7 0   01
+
+
+//127001
+//1 27001
+//1 2 7001
+//1 2 7 001
+//1 2 7 0 01
+//12 7001
+//127 001
+
+console.log(validateIpv4('127001'));
