@@ -1,0 +1,278 @@
+caching can cause disproportionate load onto certain servers just based 
+on bad luck. can depend on the time to live of the cache.
+
+better to not use dns space to round robin, better to let load balancer
+decide. load balancer can rely on any number of heuristics then. this way,
+dns just returns one ip, the ip of the load balancer.
+
+SESSIONS generally local to one machine. for example if you're first sent to server 1, server 1 has your session saved as a serialized text file in /tmp. but then if the load balancer sends you to server 2, server 2 doesn't have your session, and you may be told to log in again. but this wouldn't happen if we've horizontally scaled with disparate serviecs. one machine serves, html, one does php, one does images. then the php server would have all the 
+php traffic, and can maintain the sessions and session cookies. the problem with this however, is if one server crashes, then all the services that server provides are lost. if the image server crashes, then all images are lost for all users. in that case, there is no redundancy. but then the original issue comes back. once you get to popular, then your php server will be
+overloaded, and you come back to the same issue. 
+
+we could have a separate file server, that stores files, that is 
+reference-able from all the other servers. then we can store for session
+state there. also what if the load balancer holds the session data? but 
+then we have a weakness, what if that server breaks. can use RAID with 
+multiple hard drives?
+
+different RAID configurations give different properties.
+
+what about storing metadata in a mysql server?
+
+*** best way of mitigating risk of your one file server going down, you should get multiple file servers, and replicate data (sessions, etc)
+
+for load balancing, you can implement in software or use dedicated hardware:
+    software options:
+    amazon elastic beanstalk, HAProxy (high availability proxy, open source), LVS (linux virtual software)
+    hardware options:
+    barracuda, cisco, citrix, F5. hardware is pricy, could be even a $100,000
+
+    software is probably #1 approach, since its so much cheaper (could be free)
+
+one more solution to this problem of sticky sessions (preserving your session across servers). cookies themselves may offer a solution to the problem of when you
+visit a website multiple times, you end up on the same session object (same backend server). we can store which server we want to go to in the cookie?
+storing everything in the cookies is definitely bad. but we could put the id of the server into a cookie. then everytime a user visits the website, they
+present the cookie as sort of a handstamp, saying "i was on server number 1, send me back there". one downside of storing the id of the server in the cookie:
+if we put the backend ip in the cookie, what if the ip changes? also its not great to reveal to the world what your private ip scheme is. we can instead just store
+a big random number in the cookie, and have the load balancer map the big random numbers to the server ip addresses. if user has cookies disabled, then this whole
+system falls down, but then again if user has cookies disables, most things can be expected to not be great. 
+
+interpreted languages get a bad rap for performance.
+PHP acceleration: php does do some compilation down to something like byte code, but typically throws the results of that compilation away, and does it again 
+and again for each subsequent request. we can use some php accelerators that eliminate that discarding of the php op codes and keep them around, like caching.
+so the next time someone visits, those opcodes can just be executed. but if you change any .php files, you have to throw away the cached op codes.
+
+caching is generally a good thing, can be bad when some value changes and you have the old one. caching can be implemented in the context of dynamic websites 
+in different ways, through html, mysql query cache, memcached (pronounced memcache dee?). craigslist accepts user input through forms, but then spits out as html file
+as opposed to storing it server side like in a mysql database and use that to generate a page dynamically. if craigslist stores the html file though, they don't have
+to regenerate the html file again. so this is basically caching of a resource, the html file and storing it on disk. webservers like apache are good at spitting out
+bytes from disk. so craigslist is taking advantage of good performance of spitting out static content. downside is extra storage space, also redundancy. you have the
+same link tags and other html tags that are the same across tens of thousands of stored html files (redundant template code). but craigslist makes the calculated
+trade-off. another big gotcha: if you generated 10s of thousands of html pages: if you change the color scheme, or change the background color or some css rules, 
+then that change needs to be applied individually to each html file stored. this is in contrast to some templating engine in a dynamic code generation context, where
+that style can be changed in one place and affects all future pages generated.
+
+mysql query cache: query_cache_type = 1 to enable query cache. then if you execute a statement like "select * from baz where foo = whatever", it might be slow
+the first time but the next time you execute it, if the query cache is on and that row hasn't changed, the response will come back much faster.
+
+memcached: memory cache daemon
+memcache is very powerful. its a memory cache, can be run on the same server or another server. its a mechanism that stores whatever you want in ram.
+can be used from different languages. first connect to memcache server, similar to mysql connect. for example, if you select * from users, you can cache the results
+of the query in ram. then we you need to look up users again, you don't need to query the database, you can get it from ram. if user is null, then they're
+not in the cache, so we do the sql query and cache it. memcache simple key value store mechanism. cache might get so big that you can't keep it on the machine. we
+can have some sort of LRU garbage collection scheme and expire objects by least recently used.
+
+from the blog: http://www.lecloud.net/post/7295452622/scalability-for-dummies-part-1-clones
+
+*** part 1:
+
+public servers of a scalable web service are hidden behind a load balancer.
+first golden rule of scalability: every server contains exactly the same code base and does not store any user related data like sessions or profile pictures on 
+local disc or memory.
+sessions need to be stored in a centralized data store which is accessible to all application servers. can be external database or external persistent cache like
+redis. redis is: key value datastore, in memory. data served from memory, disk used for storage. used as database, cache, message broker. stands for 
+REmote DIctionary Server. compared to memcached.
+an external persistent cache will have better performance than an external database. external meaning the data store does not rely on the application servers, instead
+somewhere in or near the data centers application servers are in.
+when you have a code change, need to make sure that change is replicated to all your servers. can be done with tools like Capistrano (ruby on rails)
+after 'outsourcing' sessions and serving same codebase from all your servers, can create an image file from one of these servers (Amazon Machine Image). this AMI
+can be used as a super clone that all new instances are based upon. 
+
+*** part 2:
+
+servers can horizontally scale, and we can serve thousands of concurrent requests. but down the road application gets slower and slower. the reason: database.
+now changes need to be more radical than just adding more cloned servers. if we're using mysql, then we have 2 paths:
+
+1. hire a database administrator and have them do master-slave replication (read from slaves, write to master), and upgrade master server by adding more RAM. will 
+lead to words like sharding, denormalization, sql tuning. new actions to keep database running will be more and more expensive.
+
+2. denormalize from the beginning, include no more joins in any database query. can stay with mysql and use it like a nosql database (just select * i guess?), or 
+switch to a better + easier to scale nosql database, like mongo or couch. now joins will need to be done in application code, which should be better since previously
+the db was the bottleneck. but even after switching to nosql and doing dataset joins in application code, db requests will again slowly get slower, so we'll need
+to introduce a cache (an in-memory cache).
+
+*** part 3:
+
+introduce a cache like redis or memcached. cache is just a key-value store, and resides as a buffering layer between application and database. any time application
+tries to read data, it should first try to read it from the cache.
+
+2 patterns of caching data:
+
+1. cached database queries (still most common method as of 2011). any time there is a query to the database, store the result dataset in cache. a hashed version of 
+the query is the key. for example, cache[someHashFunction("SELECT * FROM users;")] = resultOf("SELECT * FROM users;");. next time you run the query, first check if
+its in the cache. a few issues in this pattern: its hard to delete a cached result when you cache a complex query. when one piece of data changes, like a table cell,
+all cached queries that include that cell need to be deleted.
+
+2. cached objects. see your data as an object like we already do in code. for example have a class "Product", with property called "data". data is an array
+containing prices, text, pictures and customer reviews of Product. Product["data"] is filled by several methods in the class doing several database requests
+that are hard to cache. then when the class is done assembling the data array, directly store the complete instance of the class in the cache.
+ideas of objects to cache: user sessions (never use the db), rendered blog articles, activity streams, user<->friend relationships
+
+*** part 4: asynchronism
+
+in general, 2 ways/paradigms asynchronims can be done.
+
+1. bakery analogy: bake bread at night, and have it ready to serve when bakery opens. do time consuming work in advance, and serve finished work with low request 
+time. basically turn dynamic content into static content. craigslist takes this approach: when someone makes a post, they generate the html file and store and serve 
+the statically generated html files.
+
+2. bakery analogy: you might get a special order like for a cake that says "happy birthday steve". in this case, bakery cannot foresee these types of special 
+requests, and so it needs to start the task when it receives it. handle tasks asynchronously. typical workflow: user comes to website, and starts a very 
+computationally intensive task which would take several minutes to finish. so frontend of website sends job onto job queue and immediately signals back to the 
+user: your job is in progress, continue to browse the page until its done. the job queue is constantly checked by workers for new jobs. if there is a job available,
+a worker will do the job, and signals back that the job is done. the frontend is constantly checking for a "job is done" signal, and tells the user. can take a 
+look at something like RabbitMQ. but the basic idea is to have a queue of jobs that a worker can process.
+
+reasons for sql:
+structured data
+strict schema
+relational data
+need for complex joins
+transactions
+clear patterns for scaling
+more established: developers, tools, community etc
+lookups by index are very fast
+
+reasons for nosql:
+semi structured data
+dynamic or flexible schema
+non relational data
+no need for complex joins
+store many TB or PB of data
+very data intensive workload
+very high throughput for IOPS
+
+sample data well suited for nosql:
+rapid ingest of clickstream and log data
+leaderboard or scoring data
+temporary data like a shopping cart
+frequently accessed 'hot' tables
+metadata/lookup tables
+
+design questions:
+
+1. designing twitter
+    requirements: 
+    -users should be able to post new tweets
+    -users should be able to follow other users
+    -users should be able to mark tweets favorite
+    -service should be able to create user timeline consisting of top tweets from the people they
+    follow
+    -tweets can contain photos and videos
+
+    nonfunctional: 
+    -service should be highly available
+    -acceptable latency is 200ms for timeline generation
+    -consistency can take a hit. if user doesn't see someone's tweet for a while its fine
+
+    system apis:
+    tweet(api_dev_key, tweetdata, tweetlocation, userlocation, mediaIds, maxResultsToReturn)
+    api key to throttle users based on allocated quota
+    tweetlocation is lat/long tweet refers to
+    userlocation is lat/long of user
+    mediaIds is ids of videos/photos that are in the tweet and need to be uploaded
+    successful post will return url to access that tweet
+
+    tweets are read heavy.
+    will need multiple application servers to serve all these requests
+    tweets have relations, but we will be pulling most recent tweets a lot, and we want
+    to have fast range queries. a sql database would be expensive since we will be joining
+    a lot based on tweets of users that others follow. a wide column store like
+    HBase or cassandra would be good.
+
+    sharding:
+    1. we'll have billions of tweets, so we'll need to shard them. one way to shard could be based
+    on userId, but we could have many hot users who have millions of followers which would cause
+    a lot of queries on the server holding the user, which causes high load.
+    over time certain users could store a lot more tweets than others, making it hard to maintain
+    uniform distribution of data.
+
+    2. another way to shard would be by tweetId. hash each tweetId and map to a random server where
+    it will be stored. to search for tweets, we have to query all the servers since we don't have a
+    logical way of knowing which server its on. we'd have to query all database partitions to
+    find all tweets by a single user, which could cause latency. could improve performance by
+    introducing a cache to store hot tweets in front of database servers.
+
+    3. based on creation time. we could fetch all recent tweets quickly, and only have to query
+    small number of servers. but traffic load will not be distributed: when writing new tweets,
+    all new tweets would go to one server while others sit idle
+
+    4. combine sharding based on tweetid and creation time. don't store tweet creation time
+    separatly and make it part of tweetId. make each tweetId universally unique and
+    eeach tweetId should contain a timestamp. can use epoch time: tweetIds can have two parts,
+    once part is epoch time, another is autoincrementing number. for each new tweet, take epoch
+    time and append an auto incrementing number to it. we can reset auto incrementing seqeuence 
+    every second. 
+
+    cache:
+    can introduce a cache for database servers to cache hot tweets and users. can use memcached
+    to store the entire tweet objects. key could just be ownerId, and value would be a doubly
+    linked list of all tweets by that user. . LRU would be a resonable policy for this system.
+
+    system is read heavy, so we should have multiple secondary databases for each db partition.
+    secondary databases will be read only, following a master-slave configuration. writes
+    go to primary server, which will be replicated to secondary servers. reads can be distributed
+    among the secondary servers. if primary server goes down we can promote a secondary server.
+
+    can add loadbalancers at 3 places: 
+    1. between clients and application servers
+    2. between application servers and database replication servers
+    3. between aggregation servers and cache
+
+    youtube:
+    also read heavy. users should be able to upload and search for and view videos.
+
+    at a high level we would need following components:
+    1. processing queue: uploaded videos will be pushed to a processing queue, to be dequeued later
+    for encoding, thumbnail generation and storage.
+    2. encoder: to encode each uploaded video into multiple formats.
+    3. thumbnail generator: need to have a few thumbnails for each video
+    4. video and thumbnail storage: store videos and thumbnails in a distributed file storage
+    5. user database: db of user's information
+    6. video metadata storage: db to store metadata about videos like title, runtime, filepath in 
+    system, uploading user, total views, likes/dislikes etc. also store comments
+
+    metadata can be stored in a relational database.
+    
+    user data can be stored in a relational database as well.
+
+    will be very read heavy, so focus on designing a system that can retrieve videos quickly.
+    videos can be stored in a distributed file system like HDFS. HDFS can store up to 200PB and
+    single cluster of 4500 servers.
+
+    should segregate write from read traffic.
+
+    should also have cdns to cache videos closely to users.
+    once video is uploaded to server, add a task to the processing queue to encode the video.
+    when encoding is done, we can send a notification to user that video is viewable, with links.
+
+    how to shard metadata:
+    can shard based on userId or videoId, but we might have problems if we have hot users or hot
+    videos. we can introduce cache to store hot videos in front of database servers.
+
+    video deduplication: can run a video matching algorithm to do analysis while a user is uploading,
+    and we can either stop the upload or if it matches some video we already have, we can just use
+    the existing copy or the new one being uploaded if it is better quality.
+
+    load balancing:
+    can use consistent caching among our cache servers.
+    can introduce a cache for metadata servers to cache hot database rows.
+    can move most popular videos to CDNs for faster delivery
+
+consistent hashing:
+    keys and nodes map to same id space
+    use a circle
+
+    tiny url:
+    functional requirements:
+    1. given a url, our service should generate a shorter and unique alias for it
+    2. when a visitor vists a short link, they should be redirected to the original URL 
+    3. users should optionally be able to pick a custom short link for their URL
+    4. links expire after default lifespan. users should also be able to specify ttl
+
+    non functional requirements:
+    1. system should be highly available. if service is down, url redirections will fail
+    2. url redirection should happen in real time with minimal latency
+    3. shortened links should not be guessable (not predictable)
+
+    assume 100:1 ratio between read and write. 
